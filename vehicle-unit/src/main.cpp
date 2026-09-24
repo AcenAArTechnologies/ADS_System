@@ -16,6 +16,7 @@ static uint32_t countdownStartMs = 0;
 static uint32_t lastOledUpdate = 0;
 static uint32_t lastStatusPublish = 0;
 static uint32_t lastDriveCommandMs = 0;
+static uint32_t alertUntilMs = 0;
 static String lastEvent = "none";
 
 // Drive commands are ignored (and motors force-stopped) once a crash is
@@ -86,6 +87,12 @@ static void cancelAlert() {
 
 static void fireAlert() {
   state = SystemState::ALERTING;
+  // Keep the buzzer (already sounding since enterCountdown()) going through
+  // the alert itself, instead of the ALERTING check below silencing it on
+  // the very same loop() pass it was set - the buzzer should still be
+  // audible at the moment the accident is actually reported, not just
+  // during the cancel window that preceded it.
+  alertUntilMs = millis() + ALERT_HOLD_MS;
   motorStop();
   GpsFix fix = gpsGetFix();
   ImuReading imu = mpuGetLatest();
@@ -107,19 +114,47 @@ void setup() {
   pinMode(CANCEL_BUTTON_PIN, INPUT_PULLUP);
   digitalWrite(CAMERA_TRIGGER_PIN, LOW);
 
-  gpsInit();
-  gsmInit();
-  gsmWaitForNetwork();
   oledInit();
+  oledSplash();
+  oledBootBegin();
 
-  if (!mpuInit()) {
+  gpsInit();
+  oledBootStatus("GPS", true);
+
+  gsmInit();
+  bool gsmOk = gsmWaitForNetwork();
+  oledBootStatus("GSM", gsmOk);
+
+  bool mpuOk = mpuInit();
+  oledBootStatus("MPU6050", mpuOk);
+  if (!mpuOk) {
     Serial.println("MPU6050 init failed - check wiring");
   }
 
   motorInit();
+  oledBootStatus("Motor", true);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  uint32_t wifiStart = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < WIFI_CONNECT_TIMEOUT_MS) {
+    delay(200);
+  }
+  bool wifiOk = WiFi.status() == WL_CONNECTED;
+  oledBootStatus("WiFi", wifiOk);
+
   mqttInit(onMqttMessage);
+  bool mqttOk = false;
+  if (wifiOk) {
+    uint32_t mqttStart = millis();
+    while (!mqttIsConnected() && millis() - mqttStart < MQTT_CONNECT_TIMEOUT_MS) {
+      mqttLoop();
+      delay(200);
+    }
+    mqttOk = mqttIsConnected();
+  }
+  oledBootStatus("MQTT", mqttOk);
+
+  delay(1200); // hold the final checklist on screen before switching to the run view
 }
 
 void loop() {
@@ -147,7 +182,7 @@ void loop() {
     fireAlert();
   }
 
-  if (state == SystemState::ALERTING) {
+  if (state == SystemState::ALERTING && millis() >= alertUntilMs) {
     // Re-arm automatically after the alert has been sent; a real deployment
     // might wait for an external reset instead.
     soundBuzzer(false);
@@ -160,6 +195,8 @@ void loop() {
     OledStatus status;
     status.gpsLocked = gpsHasFix();
     status.gsmSignalPercent = gsmSignalPercent();
+    status.wifiConnected = (WiFi.status() == WL_CONNECTED);
+    status.mqttConnected = mqttIsConnected();
     status.armed = (state == SystemState::ARMED);
     status.lastEvent = lastEvent;
     oledUpdate(status);

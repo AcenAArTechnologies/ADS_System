@@ -15,7 +15,7 @@ const Accidents = {
     insertAccidentStmt.run(
       a.id, a.device_id, a.timestamp, a.lat, a.lon, a.severity ?? null, a.impact_g ?? null, a.video_ref ?? null
     );
-    return a;
+    return getAccidentStmt.get(a.id);
   },
   get(id) {
     return getAccidentStmt.get(id);

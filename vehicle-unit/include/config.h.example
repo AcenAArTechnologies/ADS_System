@@ -76,6 +76,7 @@
 #define IMPACT_G_THRESHOLD 3.5f      // g-force magnitude considered a possible impact
 #define GYRO_DPS_THRESHOLD 250.0f    // deg/s rotation considered abnormal
 #define ALERT_COUNTDOWN_MS 10000     // time window to cancel a false positive
+#define ALERT_HOLD_MS 8000           // how long to keep buzzing / stay in ALERTING after the alert actually fires
 
 // ---- Driving ----
 #define DRIVE_SPEED_DEFAULT 200      // 0-255 PWM duty used when a drive command omits "speed"
@@ -87,3 +88,5 @@
 #define OLED_UPDATE_INTERVAL_MS 500
 #define STATUS_PUBLISH_INTERVAL_MS 30000
 #define MQTT_RETRY_QUEUE_MAX 10
+#define WIFI_CONNECT_TIMEOUT_MS 8000  // boot-time wait for WiFi before giving up and continuing
+#define MQTT_CONNECT_TIMEOUT_MS 5000  // boot-time wait for the MQTT broker before giving up and continuing

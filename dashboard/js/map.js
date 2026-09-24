@@ -15,9 +15,10 @@ function upsertAccidentMarker(a) {
     accidentMarkers.get(a.id).setLatLng([a.lat, a.lon]);
   } else {
     const m = L.marker([a.lat, a.lon], { icon: accidentIcon }).addTo(map);
-    m.bindPopup(`Accident ${a.id}<br/>Device: ${a.device_id}`);
+    m.bindPopup(`Accident ${a.id}<br/>Device: ${a.device_id}<br/>Detected: ${formatServerTime(a.created_at)}`);
     accidentMarkers.set(a.id, m);
   }
+  accidentMarkers.get(a.id)._data = a;
   renderAccidentList();
 }
 
@@ -41,12 +42,23 @@ function drawRoute(assignment) {
   routeLines.set(assignment.ambulance_id, line);
 }
 
+function formatServerTime(createdAt) {
+  if (!createdAt) return 'unknown time';
+  // created_at is stored as UTC (SQLite datetime('now')); mark it explicitly so
+  // the Date parser doesn't treat it as local time.
+  const iso = createdAt.includes('T') ? createdAt : `${createdAt.replace(' ', 'T')}Z`;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return createdAt;
+  return d.toLocaleString();
+}
+
 function renderAccidentList() {
   const ul = document.getElementById('accident-list');
   ul.innerHTML = '';
   for (const [id, m] of accidentMarkers) {
     const li = document.createElement('li');
-    li.textContent = `${id.slice(0, 8)} — ${m.getLatLng().lat.toFixed(4)}, ${m.getLatLng().lng.toFixed(4)}`;
+    const data = m._data || {};
+    li.textContent = `${id.slice(0, 8)} — ${m.getLatLng().lat.toFixed(4)}, ${m.getLatLng().lng.toFixed(4)} — ${formatServerTime(data.created_at)}`;
     ul.appendChild(li);
   }
 }

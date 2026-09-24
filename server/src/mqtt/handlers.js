@@ -46,13 +46,13 @@ async function handleAccident(deviceId, payload, mqttClient) {
     impact_g: payload.impact_g ?? null,
     video_ref: payload.video_ref ?? null,
   };
-  Accidents.insert(accident);
-  broadcast('accident_created', accident);
+  const saved = Accidents.insert(accident);
+  broadcast('accident_created', saved);
   await notifyTelegram(
-    `🚨 Accident reported\nDevice: ${accident.device_id}\nLocation: https://www.openstreetmap.org/?mlat=${accident.lat}&mlon=${accident.lon}\nSeverity: ${accident.severity}`
+    `🚨 Accident reported\nDevice: ${saved.device_id}\nLocation: https://www.openstreetmap.org/?mlat=${saved.lat}&mlon=${saved.lon}\nSeverity: ${saved.severity}\nTime (server): ${saved.created_at} UTC`
   );
 
-  const assignment = await assignNearestAmbulance(accident);
+  const assignment = await assignNearestAmbulance(saved);
   if (assignment) {
     broadcast('assignment_created', assignment);
     mqttClient.publish(
