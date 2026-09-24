@@ -21,7 +21,13 @@ void gsmInit() {
 #endif
 
   delay(3000);
-  modem.restart();
+  Serial.println("GSM: restarting modem...");
+  if (!modem.restart()) {
+    Serial.println("GSM: modem did not respond to restart (check wiring/power)");
+  } else {
+    Serial.print("GSM: modem info: ");
+    Serial.println(modem.getModemInfo());
+  }
 }
 
 bool gsmWaitForNetwork(uint32_t timeoutMs) {

@@ -14,19 +14,30 @@ static PubSubClient mqtt(wifiClient);
 static QueuedMsg queue[MQTT_RETRY_QUEUE_MAX];
 static int queueCount = 0;
 static uint32_t lastConnectAttempt = 0;
+static MqttMessageCallback userCallback = nullptr;
+
+static void internalCallback(char *topic, byte *payload, unsigned int length) {
+  if (!userCallback) return;
+  String msg;
+  msg.reserve(length);
+  for (unsigned int i = 0; i < length; i++) msg += (char)payload[i];
+  userCallback(topic, msg);
+}
 
 static void ensureWifi() {
   if (WiFi.status() == WL_CONNECTED) return;
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 }
 
-void mqttInit() {
+void mqttInit(MqttMessageCallback onMessage) {
+  userCallback = onMessage;
   ensureWifi();
   // HiveMQ Cloud (and most managed brokers) require TLS on 8883; setInsecure()
   // skips CA validation, which is fine for a device that only ever talks to
   // this one known broker but is not a substitute for pinning the real cert.
   wifiClient.setInsecure();
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
+  mqtt.setCallback(internalCallback);
 }
 
 static bool ensureConnected() {
@@ -38,10 +49,13 @@ static bool ensureConnected() {
   lastConnectAttempt = now;
 
   String clientId = String(DEVICE_ID) + "-" + String((uint32_t)esp_random(), HEX);
-  if (strlen(MQTT_USERNAME) > 0) {
-    return mqtt.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD);
+  bool ok = strlen(MQTT_USERNAME) > 0
+      ? mqtt.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD)
+      : mqtt.connect(clientId.c_str());
+  if (ok) {
+    mqtt.subscribe(MQTT_TOPIC_DRIVE, 1);
   }
-  return mqtt.connect(clientId.c_str());
+  return ok;
 }
 
 void mqttLoop() {

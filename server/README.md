@@ -24,6 +24,7 @@ docker run -it -p 1883:1883 eclipse-mosquitto
 - `POST /api/accidents/:id/video-ref` — attach Telegram video link `{ "video_ref": "https://t.me/..." }`
 - `GET /api/ambulances` — list ambulances with last known location/status
 - `GET /api/ambulances/:deviceId`
+- `POST /api/vehicles/:deviceId/drive` — send a drive command `{ "direction": "forward|backward|left|right|stop", "speed": 0-255 }` (publishes to `vehicle/{deviceId}/drive` over MQTT; also used by the dashboard's D-pad)
 - `GET /ws` — WebSocket feed (`accident_created`, `ambulance_location`, `assignment_created`)
 - `/` — Leaflet dashboard
 

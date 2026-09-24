@@ -24,8 +24,24 @@ static void internalCallback(char *topic, byte *payload, unsigned int length) {
   userCallback(topic, msg);
 }
 
+static bool wifiWasConnected = false;
+
 static void ensureWifi() {
-  if (WiFi.status() == WL_CONNECTED) return;
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!wifiWasConnected) {
+      wifiWasConnected = true;
+      Serial.print("WiFi connected, IP: ");
+      Serial.println(WiFi.localIP());
+    }
+    return;
+  }
+  wifiWasConnected = false;
+
+  static uint32_t lastAttempt = 0;
+  uint32_t now = millis();
+  if (now - lastAttempt < 3000) return;
+  lastAttempt = now;
+  Serial.println("WiFi: connecting...");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 }
 
@@ -49,6 +65,7 @@ static bool ensureConnected() {
   lastConnectAttempt = now;
 
   String clientId = String(DEVICE_ID) + "-" + String((uint32_t)esp_random(), HEX);
+  Serial.print("MQTT: connecting...");
   bool ok;
   if (strlen(MQTT_USERNAME) > 0) {
     ok = mqtt.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD);
@@ -56,7 +73,10 @@ static bool ensureConnected() {
     ok = mqtt.connect(clientId.c_str());
   }
   if (ok) {
+    Serial.println(" connected");
     mqtt.subscribe(MQTT_TOPIC_ASSIGNMENT, 1);
+  } else {
+    Serial.printf(" failed, rc=%d\n", mqtt.state());
   }
   return ok;
 }

@@ -48,6 +48,7 @@ flowchart LR
 |---|---|---|
 | `vehicle/{device_id}/accident` | vehicle → server | accident event (see below) |
 | `vehicle/{device_id}/status` | vehicle → server | optional heartbeat |
+| `vehicle/{device_id}/drive` | server → vehicle | drive command (see below) |
 | `ambulance/{device_id}/location` | ambulance → server | location update |
 | `ambulance/{device_id}/assignment` | server → ambulance | assignment result |
 
@@ -87,6 +88,15 @@ flowchart LR
   "eta_minutes": 6.4
 }
 ```
+
+### Drive command (server → vehicle)
+```json
+{
+  "direction": "forward",
+  "speed": 200
+}
+```
+`direction` is one of `forward`, `backward`, `left`, `right`, `stop`. `speed` (0-255 PWM duty) is optional and defaults to `DRIVE_SPEED_DEFAULT` on the firmware. The vehicle unit drives the L298N-connected motors on receipt and auto-stops if no new drive command arrives within `DRIVE_COMMAND_TIMEOUT_MS` (500ms), or immediately if a crash is detected — so the dashboard's D-pad must keep re-sending the held direction, not send it once.
 
 ## Assignment algorithm
 

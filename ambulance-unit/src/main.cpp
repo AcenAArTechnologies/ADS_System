@@ -49,11 +49,23 @@ static void sendLocationSms() {
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
+  Serial.println("\n=== Ambulance unit booting ===");
 
+  Serial.println("GPS: init");
   gpsInit();
-  gsmInit();
-  gsmWaitForNetwork();
 
+  Serial.println("GSM: init");
+  gsmInit();
+
+  Serial.println("GSM: waiting for network...");
+  if (gsmWaitForNetwork()) {
+    Serial.println("GSM: network acquired");
+  } else {
+    Serial.println("GSM: network wait timed out, continuing anyway");
+  }
+
+  Serial.println("WiFi: init");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   mqttInit(onMqttMessage);
 }

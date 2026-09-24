@@ -7,6 +7,7 @@
 #include "mpu6050.h"
 #include "oled.h"
 #include "mqtt_client.h"
+#include "motor.h"
 
 enum class SystemState { ARMED, COUNTDOWN, ALERTING };
 
@@ -14,7 +15,29 @@ static SystemState state = SystemState::ARMED;
 static uint32_t countdownStartMs = 0;
 static uint32_t lastOledUpdate = 0;
 static uint32_t lastStatusPublish = 0;
+static uint32_t lastDriveCommandMs = 0;
 static String lastEvent = "none";
+
+// Drive commands are ignored (and motors force-stopped) once a crash is
+// detected, so a stuck/queued command can't keep the vehicle moving into
+// whatever it just hit.
+static void onMqttMessage(const char *topic, const String &payload) {
+  if (String(topic) != MQTT_TOPIC_DRIVE) return;
+
+  JsonDocument doc;
+  if (deserializeJson(doc, payload) != DeserializationError::Ok) return;
+
+  String direction = doc["direction"] | "stop";
+  int speed = doc["speed"] | DRIVE_SPEED_DEFAULT;
+  speed = constrain(speed, 0, 255);
+
+  lastDriveCommandMs = millis();
+  if (state == SystemState::ARMED) {
+    motorApplyDriveCommand(direction, (uint8_t)speed);
+  } else {
+    motorStop();
+  }
+}
 
 static void soundBuzzer(bool on) {
   digitalWrite(BUZZER_PIN, on ? HIGH : LOW);
@@ -51,6 +74,7 @@ static void enterCountdown() {
   state = SystemState::COUNTDOWN;
   countdownStartMs = millis();
   soundBuzzer(true);
+  motorStop();
   lastEvent = "countdown";
 }
 
@@ -62,6 +86,7 @@ static void cancelAlert() {
 
 static void fireAlert() {
   state = SystemState::ALERTING;
+  motorStop();
   GpsFix fix = gpsGetFix();
   ImuReading imu = mpuGetLatest();
 
@@ -91,14 +116,22 @@ void setup() {
     Serial.println("MPU6050 init failed - check wiring");
   }
 
+  motorInit();
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  mqttInit();
+  mqttInit(onMqttMessage);
 }
 
 void loop() {
   gpsPoll();
   mpuPoll();
   mqttLoop();
+
+  // Link-loss failsafe: stop driving if no drive command has arrived recently.
+  if (lastDriveCommandMs != 0 && millis() - lastDriveCommandMs >= DRIVE_COMMAND_TIMEOUT_MS) {
+    motorStop();
+    lastDriveCommandMs = 0;
+  }
 
   // Manual cancel button, active LOW.
   if (digitalRead(CANCEL_BUTTON_PIN) == LOW && state == SystemState::COUNTDOWN) {

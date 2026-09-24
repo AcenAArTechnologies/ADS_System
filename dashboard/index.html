@@ -18,9 +18,26 @@
     <ul id="accident-list"></ul>
     <h2>Ambulances</h2>
     <ul id="ambulance-list"></ul>
+    <h2>Drive Vehicle</h2>
+    <div id="drive-panel">
+      <input id="drive-device-id" type="text" placeholder="Device ID (e.g. VEH-001)" value="VEH-001" />
+      <div id="dpad">
+        <button class="dpad-btn dpad-up" data-direction="forward" aria-label="Forward">&#9650;</button>
+        <button class="dpad-btn dpad-left" data-direction="left" aria-label="Left">&#9664;</button>
+        <button class="dpad-btn dpad-stop" data-direction="stop" aria-label="Stop">&#9632;</button>
+        <button class="dpad-btn dpad-right" data-direction="right" aria-label="Right">&#9654;</button>
+        <button class="dpad-btn dpad-down" data-direction="backward" aria-label="Backward">&#9660;</button>
+      </div>
+      <label id="drive-speed-label">
+        Speed
+        <input id="drive-speed" type="range" min="60" max="255" value="200" />
+      </label>
+      <span id="drive-status" class="status">idle</span>
+    </div>
   </aside>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/drive.js"></script>
 </body>
 </html>

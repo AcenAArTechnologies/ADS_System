@@ -29,6 +29,7 @@
 #define MQTT_PASSWORD "your-hivemq-password"
 #define MQTT_TOPIC_ACCIDENT "vehicle/" DEVICE_ID "/accident"
 #define MQTT_TOPIC_STATUS "vehicle/" DEVICE_ID "/status"
+#define MQTT_TOPIC_DRIVE "vehicle/" DEVICE_ID "/drive"
 
 // ---- GSM / SIM800L (SMS only) ----
 #define EMERGENCY_PHONE_NUMBER "+911234567890"  // SMS destination on accident
@@ -63,10 +64,22 @@
 // Wire this GPIO to a GPIO input on the camera module (with a shared ground).
 #define CAMERA_TRIGGER_PIN 7
 
+// Drive motors - L298N dual H-bridge (differential drive, two DC motors)
+#define MOTOR_LEFT_IN1_PIN 10
+#define MOTOR_LEFT_IN2_PIN 11
+#define MOTOR_LEFT_EN_PIN 12   // ENA, PWM speed for the left motor
+#define MOTOR_RIGHT_IN1_PIN 13
+#define MOTOR_RIGHT_IN2_PIN 14
+#define MOTOR_RIGHT_EN_PIN 21  // ENB, PWM speed for the right motor
+
 // ---- Crash detection thresholds (tune for your vehicle/mounting) ----
 #define IMPACT_G_THRESHOLD 3.5f      // g-force magnitude considered a possible impact
 #define GYRO_DPS_THRESHOLD 250.0f    // deg/s rotation considered abnormal
 #define ALERT_COUNTDOWN_MS 10000     // time window to cancel a false positive
+
+// ---- Driving ----
+#define DRIVE_SPEED_DEFAULT 200      // 0-255 PWM duty used when a drive command omits "speed"
+#define DRIVE_COMMAND_TIMEOUT_MS 500 // stop the motors if no drive command arrives within this window (link-loss failsafe)
 
 // ---- Timing ----
 #define GPS_READ_INTERVAL_MS 1000
