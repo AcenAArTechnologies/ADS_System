@@ -5,3 +5,6 @@ server/.env
 .pio/
 .vscode/
 *.log
+vehicle-unit/include/config.h
+ambulance-unit/include/config.h
+camera-module/include/config.h

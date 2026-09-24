@@ -23,10 +23,10 @@
 // broker with a public IP/domain (a small cloud VM running Mosquitto, or a
 // public test broker for development) so both units can reach it from
 // wherever their own hotspot's internet connection goes.
-#define MQTT_HOST "192.168.1.100"   // your broker's address/hostname
-#define MQTT_PORT 1883
-#define MQTT_USERNAME ""            // leave blank if broker has no auth
-#define MQTT_PASSWORD ""
+#define MQTT_HOST "91e982ad35f14f71bea738f25d6ff9a7.s1.eu.hivemq.cloud"
+#define MQTT_PORT 8883               // HiveMQ Cloud requires TLS on 8883
+#define MQTT_USERNAME "your-hivemq-username"
+#define MQTT_PASSWORD "your-hivemq-password"
 #define MQTT_TOPIC_ACCIDENT "vehicle/" DEVICE_ID "/accident"
 #define MQTT_TOPIC_STATUS "vehicle/" DEVICE_ID "/status"
 

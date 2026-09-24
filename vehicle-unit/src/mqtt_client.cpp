@@ -1,6 +1,7 @@
 #include "mqtt_client.h"
 #include "config.h"
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 
 struct QueuedMsg {
@@ -8,7 +9,7 @@ struct QueuedMsg {
   String payload;
 };
 
-static WiFiClient wifiClient;
+static WiFiClientSecure wifiClient;
 static PubSubClient mqtt(wifiClient);
 static QueuedMsg queue[MQTT_RETRY_QUEUE_MAX];
 static int queueCount = 0;
@@ -21,6 +22,10 @@ static void ensureWifi() {
 
 void mqttInit() {
   ensureWifi();
+  // HiveMQ Cloud (and most managed brokers) require TLS on 8883; setInsecure()
+  // skips CA validation, which is fine for a device that only ever talks to
+  // this one known broker but is not a substitute for pinning the real cert.
+  wifiClient.setInsecure();
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
 }
 
