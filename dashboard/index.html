@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ADS Live Tracking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Accident Detection &amp; Ambulance Navigation — Live Dashboard</h1>
+    <span id="conn-status" class="status">connecting…</span>
+  </header>
+  <div id="map"></div>
+  <aside id="panel">
+    <h2>Active Accidents</h2>
+    <ul id="accident-list"></ul>
+    <h2>Ambulances</h2>
+    <ul id="ambulance-list"></ul>
+  </aside>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/map.js"></script>
+</body>
+</html>

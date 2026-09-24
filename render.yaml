@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: ads-server
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: MQTT_URL
+        sync: false
+      - key: MQTT_USERNAME
+        sync: false
+      - key: MQTT_PASSWORD
+        sync: false
+      - key: DB_PATH
+        value: ./data/ads.db
+      - key: OSRM_BASE_URL
+        value: https://router.project-osrm.org
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: ASSIGNMENT_SEARCH_RADIUS_KM
+        value: 25

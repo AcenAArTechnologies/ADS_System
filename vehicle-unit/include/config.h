@@ -1,0 +1,76 @@
+#pragma once
+
+// ---- Identity ----
+#define DEVICE_ID "VEH-001"
+
+// ---- WiFi ----
+// This is the Vehicle Unit's OWN hotspot connection, independent of the
+// Ambulance Unit's (which has its own WIFI_SSID/PASSWORD in its own
+// config.h). The two units do not need to share a network - each just
+// needs its own path to the MQTT broker. GSM below is SMS-only, never a
+// data/MQTT transport. Distance/ETA on the server is computed purely from
+// each device's GPS lat/lon in its MQTT payload - it does not depend on
+// which WiFi network either device is on. For a real distance/ETA during
+// testing, the two units simply need to be at two different physical
+// locations (with a GPS fix) when publishing - not on different networks.
+#define WIFI_SSID "your-vehicle-hotspot-ssid"
+#define WIFI_PASSWORD "your-vehicle-hotspot-password"
+
+// ---- MQTT ----
+// IMPORTANT: if this unit and the Ambulance Unit are on two different
+// hotspots (e.g. two different phones), a private LAN address like
+// 192.168.1.100 will NOT be reachable from both. Point MQTT_HOST at a
+// broker with a public IP/domain (a small cloud VM running Mosquitto, or a
+// public test broker for development) so both units can reach it from
+// wherever their own hotspot's internet connection goes.
+#define MQTT_HOST "192.168.1.100"   // your broker's address/hostname
+#define MQTT_PORT 1883
+#define MQTT_USERNAME ""            // leave blank if broker has no auth
+#define MQTT_PASSWORD ""
+#define MQTT_TOPIC_ACCIDENT "vehicle/" DEVICE_ID "/accident"
+#define MQTT_TOPIC_STATUS "vehicle/" DEVICE_ID "/status"
+
+// ---- GSM / SIM800L (SMS only) ----
+#define EMERGENCY_PHONE_NUMBER "+911234567890"  // SMS destination on accident
+
+// ---- Pin assignments (ESP32-S3 DevKitC-1) — CONFIRM AGAINST YOUR WIRING ----
+// GPS module (NEO-6M) - UART
+#define GPS_RX_PIN 16   // ESP32 RX <- GPS TX
+#define GPS_TX_PIN 17   // ESP32 TX -> GPS RX
+#define GPS_BAUD 9600
+
+// SIM800L GSM module - UART
+#define GSM_RX_PIN 18   // ESP32 RX <- SIM800 TX
+#define GSM_TX_PIN 19   // ESP32 TX -> SIM800 RX
+#define GSM_BAUD 9600
+#define GSM_RESET_PIN 5 // optional, -1 if not wired
+
+// MPU6050 - I2C
+#define MPU_SDA_PIN 8
+#define MPU_SCL_PIN 9
+
+// SH1106 OLED - I2C (shares bus with MPU6050)
+#define OLED_SDA_PIN 8
+#define OLED_SCL_PIN 9
+
+// Buzzer
+#define BUZZER_PIN 4
+
+// Manual cancel/reset button (active LOW, internal pull-up)
+#define CANCEL_BUTTON_PIN 6
+
+// Trigger signal to the camera module (XIAO ESP32-S3 Sense), active HIGH pulse.
+// Wire this GPIO to a GPIO input on the camera module (with a shared ground).
+#define CAMERA_TRIGGER_PIN 7
+
+// ---- Crash detection thresholds (tune for your vehicle/mounting) ----
+#define IMPACT_G_THRESHOLD 3.5f      // g-force magnitude considered a possible impact
+#define GYRO_DPS_THRESHOLD 250.0f    // deg/s rotation considered abnormal
+#define ALERT_COUNTDOWN_MS 10000     // time window to cancel a false positive
+
+// ---- Timing ----
+#define GPS_READ_INTERVAL_MS 1000
+#define MPU_READ_INTERVAL_MS 50
+#define OLED_UPDATE_INTERVAL_MS 500
+#define STATUS_PUBLISH_INTERVAL_MS 30000
+#define MQTT_RETRY_QUEUE_MAX 10
